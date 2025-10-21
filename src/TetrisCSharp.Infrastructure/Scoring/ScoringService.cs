@@ -11,9 +11,20 @@ public sealed class ScoringService : IScoring
     {
         if (lines <= 0) return;
         int @base = lines switch { 1 => 40, 2 => 100, 3 => 300, 4 => 1200, _ => 0 };
-        Total += @base * (level + 1); // :contentReference[oaicite:13]{index=13}
+        Total += @base * (level + 1);
     }
-    public void AddSoftDrop(int cells) { if (cells > 0) PendingDropPoints += cells * 1; } // :contentReference[oaicite:14]{index=14}
-    public void AddHardDrop(int cells) { if (cells > 0) PendingDropPoints += cells * 2; } // :contentReference[oaicite:15]{index=15}
+    public void AddSoftDrop(int cells)
+    {
+        if (cells > 0) PendingDropPoints += cells;
+    }
+    public void AddHardDrop(int cells)
+    {
+        if (cells > 0) PendingDropPoints += cells * 2;
+    }
     public int CommitPending() { int add = PendingDropPoints; PendingDropPoints = 0; Total += add; return add; }
+    public void Reset()
+    {
+        Total = 0;
+        PendingDropPoints = 0;
+    }
 }

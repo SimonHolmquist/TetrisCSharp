@@ -26,7 +26,6 @@ public sealed class GameLoopService(GameState state, IClock clock, IRenderer ren
         switch (Mode)
         {
             case UIMode.MainMenu:
-                _renderer.ShowMainMenu(_menuIndex, _blink);
                 HandleMenuInput();
                 break;
 
@@ -43,15 +42,8 @@ public sealed class GameLoopService(GameState state, IClock clock, IRenderer ren
                 {
                     if (e.Key.HasFlag(KeyFlags.Restart))
                     { // Space
-                        // reinicio
-                        var gs = State;
-                        var cfg = gs.Config;
-                        var rng = typeof(GameState).GetField("_rng", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(gs);
-                        var rot = typeof(GameState).GetField("_rot", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(gs);
-                        var sc = typeof(GameState).GetField("_scoring", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(gs);
-                        var newState = new GameState(cfg, (IRandomizer)rng!, (IRotationSystem)rot!, (IScoring)sc!);
-                        typeof(GameLoopService).GetProperty("State")!.SetValue(this, newState);
-                        newState.Start(_clock);
+                        State.Reset();
+                        State.Start(_clock);
                         Mode = UIMode.Playing;
                         break;
                     }
@@ -88,7 +80,7 @@ public sealed class GameLoopService(GameState state, IClock clock, IRenderer ren
             if (e.Key.HasFlag(KeyFlags.RotateCW)) _menuIndex = Math.Max(_menuIndex - 1, 0); // ↑
             if (e.Key.HasFlag(KeyFlags.Confirm))
             {
-                if (_menuIndex == 0) { State.Start(_clock); Mode = UIMode.Playing; }
+                if (_menuIndex == 0) { State.Reset(); State.Start(_clock); Mode = UIMode.Playing; }
                 else if (_menuIndex == 1) Mode = UIMode.Ranking;
                 else Mode = UIMode.Exit;
             }

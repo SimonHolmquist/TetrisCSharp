@@ -8,4 +8,5 @@ public interface IScoring
     void AddSoftDrop(int cells);
     void AddHardDrop(int cells);
     int CommitPending();
+    void Reset();
 }
