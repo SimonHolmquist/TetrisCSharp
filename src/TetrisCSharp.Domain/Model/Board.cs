@@ -20,8 +20,12 @@ public sealed class Board
     public void ClearAll()
     {
         for (int y = 0; y < Height; y++)
+        {
             for (int x = 0; x < Width; x++)
+            {
                 _cells[x, y] = CellState.Empty;
+            }
+        }
     }
 
     public bool IsInside(Coord c)
@@ -41,18 +45,22 @@ public sealed class Board
 
     public bool TryMove(ref Piece p, int dx, int dy)
     {
-        var moved = p.WithOrigin(p.Origin.Translate(dx, dy));
-        if (!IsValidPosition(moved)) return false;
+        Piece moved = p.WithOrigin(p.Origin.Translate(dx, dy));
+        if (!IsValidPosition(moved))
+        {
+            return false;
+        }
+
         p = moved;
         return true;
     }
 
     public bool TryRotate(ref Piece p, RotationDir dir, Func<Piece, IEnumerable<Coord>> kickOffsets)
     {
-        var rotated = p.Rotate(dir);
-        foreach (var off in kickOffsets(rotated))
+        Piece rotated = p.Rotate(dir);
+        foreach (Coord off in kickOffsets(rotated))
         {
-            var candidate = rotated.WithOrigin(p.Origin.Translate(off.X, off.Y));
+            Piece candidate = rotated.WithOrigin(p.Origin.Translate(off.X, off.Y));
             if (IsValidPosition(candidate)) { p = candidate; return true; }
         }
         return false;
@@ -60,30 +68,51 @@ public sealed class Board
 
     public void Lock(Piece p)
     {
-        foreach (var c in p.Blocks())
-            if (IsInside(c)) _cells[c.X, c.Y] = CellState.Locked;
+        foreach (Coord c in p.Blocks())
+        {
+            if (IsInside(c))
+            {
+                _cells[c.X, c.Y] = CellState.Locked;
+            }
+        }
     }
 
     public int ClearLines(out List<int> clearedRows)
     {
-        clearedRows = new();
+        clearedRows = [];
         for (int y = 0; y < Height; y++)
         {
             bool full = true;
             for (int x = 0; x < Width; x++)
+            {
                 if (_cells[x, y] == CellState.Empty) { full = false; break; }
-            if (full) clearedRows.Add(y);
+            }
+
+            if (full)
+            {
+                clearedRows.Add(y);
+            }
         }
 
-        if (clearedRows.Count == 0) return 0;
+        if (clearedRows.Count == 0)
+        {
+            return 0;
+        }
 
-        foreach (var row in clearedRows)
+        foreach (int row in clearedRows)
         {
             for (int y = row; y > 0; y--)
+            {
                 for (int x = 0; x < Width; x++)
+                {
                     _cells[x, y] = _cells[x, y - 1];
+                }
+            }
+
             for (int x = 0; x < Width; x++)
+            {
                 _cells[x, 0] = CellState.Empty;
+            }
         }
         return clearedRows.Count;
     }
