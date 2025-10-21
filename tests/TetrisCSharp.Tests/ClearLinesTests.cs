@@ -1,10 +1,8 @@
 using FluentAssertions;
-using TetrisCSharp.Domain;
 using TetrisCSharp.Domain.Config;
 using TetrisCSharp.Domain.Geometry;
 using TetrisCSharp.Domain.Model;
 using TetrisCSharp.Tests.TestKit;
-using Xunit;
 
 namespace TetrisCSharp.Tests
 {

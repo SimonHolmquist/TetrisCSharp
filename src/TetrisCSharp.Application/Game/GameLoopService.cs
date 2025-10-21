@@ -20,7 +20,7 @@ public sealed class GameLoopService(GameState state, IClock clock, IRenderer ren
 
     public void RunFrame()
     {
-        var now = _clock.Millis;
+        long now = _clock.Millis;
         if (now - _lastBlinkMs > 400) { _blink = !_blink; _lastBlinkMs = now; }
 
         switch (Mode)
@@ -38,7 +38,7 @@ public sealed class GameLoopService(GameState state, IClock clock, IRenderer ren
 
             case UIMode.Paused:
                 _renderer.Render(State);
-                foreach (var e in _input.Poll())
+                foreach (InputEvent e in _input.Poll())
                 {
                     if (e.Key.HasFlag(KeyFlags.Restart))
                     { // Space
@@ -53,13 +53,13 @@ public sealed class GameLoopService(GameState state, IClock clock, IRenderer ren
 
             case UIMode.Ranking:
                 _renderer.ShowRanking(_scores.GetTop(10));
-                foreach (var e in _input.Poll())
+                foreach (InputEvent e in _input.Poll())
                     if (e.Key.HasFlag(KeyFlags.Back) || e.Key.HasFlag(KeyFlags.Confirm)) { Mode = UIMode.MainMenu; break; }
                 break;
 
             case UIMode.GameOver:
                 _renderer.ShowGameOver(State.Score, _blink);
-                var alias = _renderer.PromptAlias();
+                string alias = _renderer.PromptAlias();
                 if (!string.IsNullOrWhiteSpace(alias))
                 {
                     _scores.TryAdd(new ScoreEntry(alias, State.Score, _clock.UtcNow));
@@ -74,7 +74,7 @@ public sealed class GameLoopService(GameState state, IClock clock, IRenderer ren
 
     private void HandleMenuInput()
     {
-        foreach (var e in _input.Poll())
+        foreach (InputEvent e in _input.Poll())
         {
             if (e.Key.HasFlag(KeyFlags.Soft)) _menuIndex = Math.Min(_menuIndex + 1, 2); // ↓
             if (e.Key.HasFlag(KeyFlags.RotateCW)) _menuIndex = Math.Max(_menuIndex - 1, 0); // ↑
@@ -90,7 +90,7 @@ public sealed class GameLoopService(GameState state, IClock clock, IRenderer ren
 
     private void HandleGameInput()
     {
-        foreach (var e in _input.Poll())
+        foreach (InputEvent e in _input.Poll())
         {
             if (e.Key.HasFlag(KeyFlags.Help) && e.Type == KeyEventType.Down) State.ToggleHelp();
             if (e.Key.HasFlag(KeyFlags.Pause) && e.Type == KeyEventType.Down) { State.TogglePause(); Mode = State.IsPaused ? UIMode.Paused : UIMode.Playing; }
