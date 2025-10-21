@@ -31,11 +31,20 @@ jobs:
       - name: Format (verify)
         run: dotnet format --verify-no-changes
 
-      - name: Publish Console (zip)
+      - name: Publish Console
+        run: dotnet publish src/TetrisCSharp.ConsoleUI/TetrisCSharp.ConsoleUI.csproj -c Release -o artifacts/console
+
+      - name: Package artifact (Linux)
+        if: runner.os == 'Linux'
         run: |
-          dotnet publish src/TetrisCSharp.ConsoleUI/TetrisCSharp.ConsoleUI.csproj -c Release -o artifacts/console
           cd artifacts
-          tar -czf TetrisCSharp_Console.zip console
+          zip -r TetrisCSharp_Console.zip console
+
+      - name: Package artifact (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cd artifacts
+          powershell -command "Compress-Archive -Path console\* -DestinationPath TetrisCSharp_Console.zip"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
