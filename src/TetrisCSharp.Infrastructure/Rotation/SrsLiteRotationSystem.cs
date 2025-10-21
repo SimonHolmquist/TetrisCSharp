@@ -1,6 +1,7 @@
 using TetrisCSharp.Application.Abstractions;
 using TetrisCSharp.Domain.Geometry;
 using TetrisCSharp.Domain.Model;
+using RotationValue = TetrisCSharp.Domain.Model.Rotation;
 
 namespace TetrisCSharp.Infrastructure.Rotation;
 
@@ -8,8 +9,8 @@ namespace TetrisCSharp.Infrastructure.Rotation;
 public sealed class SrsLiteRotationSystem : IRotationSystem
 {
     private static readonly Coord[] Kicks = [new Coord(0, 0), new(-1, 0), new(1, 0), new(0, -1)];
-    public IEnumerable<Coord> GetKickOffsets(TetrominoType type, Domain.Model.Rotation from, Domain.Model.Rotation to)
-    {
-        return Kicks;
-    }
+
+    public IEnumerable<Coord> GetKickOffsets(TetrominoType type, RotationValue from, RotationValue to) => Kicks;
+
+    public IReadOnlyList<Coord> GetOffsets(TetrominoType type, RotationValue from, RotationValue to) => Kicks;
 }

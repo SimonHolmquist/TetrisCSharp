@@ -1,3 +1,4 @@
+using System;
 using TetrisCSharp.Application.Abstractions;
 using TetrisCSharp.Domain.Config;
 using TetrisCSharp.Domain.Geometry;
@@ -20,7 +21,6 @@ public sealed class GameState
 
     public readonly GameConfig Config;
     private readonly IRandomizer _rng;
-    private readonly IRotationSystem _rot;
     private readonly IScoring _scoring;
 
     // Timers
@@ -32,25 +32,48 @@ public sealed class GameState
     private long _leftLastRepeat, _rightLastRepeat;
 
     public GameState(GameConfig cfg, IRandomizer rng, IRotationSystem rot, IScoring scoring)
+        : this(new Board(cfg, rot), cfg, rng, scoring, clearBoard: true)
     {
-        Config = cfg;
-        _rng = rng;
-        _rot = rot;
-        _scoring = scoring;
-        Board = new Board(cfg);
-        Reset();
+    }
+
+    public GameState(Board board, GameConfig? cfg = null, IRandomizer? rng = null, IScoring? scoring = null)
+        : this(board,
+              ResolveConfig(board, cfg),
+              rng ?? new FallbackRandomizer(),
+              scoring ?? new NullScoring(),
+              clearBoard: false)
+    {
+    }
+
+    private GameState(Board board, GameConfig config, IRandomizer rng, IScoring scoring, bool clearBoard)
+    {
+        Board = board ?? throw new ArgumentNullException(nameof(board));
+        Config = config ?? throw new ArgumentNullException(nameof(config));
+        _rng = rng ?? throw new ArgumentNullException(nameof(rng));
+        _scoring = scoring ?? throw new ArgumentNullException(nameof(scoring));
+        Reset(clearBoard);
     }
 
     public void Start(IClock clock)
     {
-        SpawnNewCurrent();
+        if (!TrySpawnNext())
+        {
+            return;
+        }
         _lastGravityTickMs = clock.Millis;
-        if (!Board.IsValidPosition(_current)) IsOver = true;
     }
 
     public void Reset()
     {
-        Board.ClearAll();
+        Reset(true);
+    }
+
+    private void Reset(bool clearBoard)
+    {
+        if (clearBoard)
+        {
+            Board.ClearAll();
+        }
         _scoring.Reset();
         LinesCleared = 0;
         Level = 0;
@@ -75,18 +98,31 @@ public sealed class GameState
         return new Coord(x, 1); // 1 por sobre zona visible
     }
 
-    private void SpawnNewCurrent()
+    public bool TrySpawnNext()
     {
         _current = new Piece(Next, Rotation.R0, SpawnOrigin());
         Next = _rng.Next();
+        if (!Board.IsValidPosition(_current))
+        {
+            IsOver = true;
+            return false;
+        }
+        return true;
     }
 
-    public void TogglePause() => IsPaused = !IsPaused;
-    public void ToggleHelp() => HelpVisible = !HelpVisible;
+    public void TogglePause()
+    {
+        IsPaused = !IsPaused;
+    }
+
+    public void ToggleHelp()
+    {
+        HelpVisible = !HelpVisible;
+    }
 
     private void UpdateGravity(IClock clock)
     {
-        var now = clock.Millis;
+        long now = clock.Millis;
         if (now - _lastGravityTickMs < GravityMs || IsPaused || IsOver)
         {
             return;
@@ -101,15 +137,24 @@ public sealed class GameState
 
     public void Rotate(RotationDir dir)
     {
-        if (IsPaused || IsOver) return;
-        Coord[] KicksProvider(Piece r) =>
-            _rot.GetKickOffsets(r.Type, _current.Rotation, r.Rotation).ToArray();
-        Board.TryRotate(ref _current, dir, p => KicksProvider(p));
+        if (IsPaused || IsOver)
+        {
+            return;
+        }
+
+        if (Board.TryRotate(_current, dir, out Piece? rotated))
+        {
+            _current = rotated;
+        }
     }
 
     public void HardDrop()
     {
-        if (IsPaused || IsOver) return;
+        if (IsPaused || IsOver)
+        {
+            return;
+        }
+
         int cells = 0;
         while (Board.TryMove(ref _current, 0, 1)) { cells++; }
         _scoring.AddHardDrop(cells);
@@ -175,11 +220,7 @@ public sealed class GameState
         Score = _scoring.Total;
         LinesCleared += lines;
         UpdateLevelFromLines();
-        SpawnNewCurrent();
-        if (!Board.IsValidPosition(_current))
-        {
-            IsOver = true;
-        }
+        TrySpawnNext();
     }
 
     private void UpdateLevelFromLines()
@@ -195,5 +236,59 @@ public sealed class GameState
     private void UpdateGravityDelay()
     {
         GravityMs = Math.Max(Config.GravityMinMs, Config.GravityBaseMs - Level * Config.GravityPerLevelMs);
+    }
+
+    private static GameConfig ResolveConfig(Board board, GameConfig? overrideConfig)
+    {
+        ArgumentNullException.ThrowIfNull(board);
+        var candidate = overrideConfig ?? board.Config;
+        if (candidate.BoardWidth == board.Width && candidate.BoardHeight == board.Height)
+        {
+            return candidate;
+        }
+
+        return new GameConfig
+        {
+            BoardWidth = board.Width,
+            BoardHeight = board.Height,
+            LinesPerLevel = candidate.LinesPerLevel,
+            GravityBaseMs = candidate.GravityBaseMs,
+            GravityPerLevelMs = candidate.GravityPerLevelMs,
+            GravityMinMs = candidate.GravityMinMs,
+            UseSevenBag = candidate.UseSevenBag
+        };
+    }
+
+    private sealed class FallbackRandomizer : IRandomizer
+    {
+        private static readonly TetrominoType[] Sequence = Enum.GetValues<TetrominoType>();
+        private int _index;
+
+        public TetrominoType Next()
+        {
+            var value = Sequence[_index % Sequence.Length];
+            _index++;
+            return value;
+        }
+    }
+
+    private sealed class NullScoring : IScoring
+    {
+        public int Total { get; private set; }
+        public int PendingDropPoints { get; private set; }
+
+        public void AddLineClear(int lines, int level) { }
+
+        public void AddSoftDrop(int cells) { }
+
+        public void AddHardDrop(int cells) { }
+
+        public int CommitPending() => 0;
+
+        public void Reset()
+        {
+            Total = 0;
+            PendingDropPoints = 0;
+        }
     }
 }

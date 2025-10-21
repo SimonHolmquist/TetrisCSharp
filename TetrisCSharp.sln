@@ -1,4 +1,5 @@
-﻿Microsoft Visual Studio Solution File, Format Version 12.00
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -9,6 +10,13 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TetrisCSharp.Infrastructure", "src\TetrisCSharp.Infrastructure\TetrisCSharp.Infrastructure.csproj", "{27D7AD1B-8439-4EB9-9785-E72A2BE5EDE6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TetrisCSharp.ConsoleUI", "src\TetrisCSharp.ConsoleUI\TetrisCSharp.ConsoleUI.csproj", "{BA1D8FFD-FD60-4D08-B155-A3EA6CA9EF58}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{336CABC0-9A54-47ED-B512-3737AE0E84D1}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.Buil.props = Directory.Buil.props
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TetrisCSharp.Tests", "tests\TetrisCSharp.Tests\TetrisCSharp.Tests.csproj", "{9C4975A3-55C0-4C1F-B8CF-9C7869293521}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,8 +40,18 @@ Global
 		{BA1D8FFD-FD60-4D08-B155-A3EA6CA9EF58}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BA1D8FFD-FD60-4D08-B155-A3EA6CA9EF58}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BA1D8FFD-FD60-4D08-B155-A3EA6CA9EF58}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9C4975A3-55C0-4C1F-B8CF-9C7869293521}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C4975A3-55C0-4C1F-B8CF-9C7869293521}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C4975A3-55C0-4C1F-B8CF-9C7869293521}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C4975A3-55C0-4C1F-B8CF-9C7869293521}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{9C4975A3-55C0-4C1F-B8CF-9C7869293521} = {336CABC0-9A54-47ED-B512-3737AE0E84D1}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CD34D65B-ECEE-45DD-9567-0AAF2F6E065C}
 	EndGlobalSection
 EndGlobal
