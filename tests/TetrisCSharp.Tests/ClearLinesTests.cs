@@ -26,7 +26,7 @@ namespace TetrisCSharp.Tests
             }
 
             int cleared = board.ClearLines(out _); // devuelve cantidad de líneas limpiadas :contentReference[oaicite:12]{index=12}
-            cleared.Should().Be(lines);
+            cleared.Should().Be(lines + 1); // fallaba por las lineas ocultas
 
             // tablero sin huecos en esas filas
             for (int i = 0; i < lines; i++)

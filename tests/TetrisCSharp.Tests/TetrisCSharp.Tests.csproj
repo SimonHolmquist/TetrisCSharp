@@ -24,6 +24,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\TetrisCSharp.Domain\TetrisCSharp.Domain.csproj" />
     <ProjectReference Include="..\..\src\TetrisCSharp.Application\TetrisCSharp.Application.csproj" />
+    <ProjectReference Include="..\..\src\TetrisCSharp.Infrastructure\TetrisCSharp.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

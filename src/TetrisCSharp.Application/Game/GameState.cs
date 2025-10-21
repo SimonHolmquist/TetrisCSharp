@@ -63,7 +63,10 @@ public sealed class GameState
         _lastGravityTickMs = clock.Millis;
     }
 
-    public void Reset() => Reset(true);
+    public void Reset()
+    {
+        Reset(true);
+    }
 
     private void Reset(bool clearBoard)
     {
@@ -107,12 +110,19 @@ public sealed class GameState
         return true;
     }
 
-    public void TogglePause() => IsPaused = !IsPaused;
-    public void ToggleHelp() => HelpVisible = !HelpVisible;
+    public void TogglePause()
+    {
+        IsPaused = !IsPaused;
+    }
+
+    public void ToggleHelp()
+    {
+        HelpVisible = !HelpVisible;
+    }
 
     private void UpdateGravity(IClock clock)
     {
-        var now = clock.Millis;
+        long now = clock.Millis;
         if (now - _lastGravityTickMs < GravityMs || IsPaused || IsOver)
         {
             return;
@@ -127,8 +137,12 @@ public sealed class GameState
 
     public void Rotate(RotationDir dir)
     {
-        if (IsPaused || IsOver) return;
-        if (Board.TryRotate(_current, dir, out var rotated))
+        if (IsPaused || IsOver)
+        {
+            return;
+        }
+
+        if (Board.TryRotate(_current, dir, out Piece? rotated))
         {
             _current = rotated;
         }
@@ -136,7 +150,11 @@ public sealed class GameState
 
     public void HardDrop()
     {
-        if (IsPaused || IsOver) return;
+        if (IsPaused || IsOver)
+        {
+            return;
+        }
+
         int cells = 0;
         while (Board.TryMove(ref _current, 0, 1)) { cells++; }
         _scoring.AddHardDrop(cells);

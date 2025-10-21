@@ -78,7 +78,7 @@ public sealed class Board
 
     public bool TryRotate(ref Piece piece, RotationDir dir)
     {
-        if (TryRotate(piece, dir, out var rotated))
+        if (TryRotate(piece, dir, out Piece? rotated))
         {
             piece = rotated!;
             return true;
@@ -97,44 +97,63 @@ public sealed class Board
         }
     }
 
-    public int ClearLines(out List<int> clearedRows)
+    // Hay 2 filas ocultas arriba para spawn/techo; no deben participar del clear
+    private const int HiddenTop = 2;
+
+    public int ClearLines(out int[] clearedRows)
     {
-        clearedRows = [];
-        for (int y = 0; y < Height; y++)
+        List<int> cleared = new(4);
+        for (int y = Height - 1; y >= HiddenTop; y--)
         {
-            bool full = true;
-            for (int x = 0; x < Width; x++)
+            if (!IsRowFull(y))
             {
-                if (_cells[x, y] == CellState.Empty) { full = false; break; }
+                continue;
             }
 
-            if (full)
+            cleared.Add(y);
+
+            // Desplazar todo lo que está por encima una fila hacia abajo
+            for (int src = y - 1; src >= HiddenTop; src--)
             {
-                clearedRows.Add(y);
+                CopyRowDown(src, src + 1);
             }
+            // La fila top visible queda vacía
+            ClearRow(HiddenTop);
+
+            // Re-chequear la misma y (cayó una fila nueva aquí)
+            y++;
         }
 
-        if (clearedRows.Count == 0)
-        {
-            return 0;
-        }
+        clearedRows = [.. cleared];
+        return cleared.Count;
+    }
 
-        foreach (int row in clearedRows)
+    private bool IsRowFull(int y)
+    {
+        for (int x = 0; x < Width; x++)
         {
-            for (int y = row; y > 0; y--)
+            if (_cells[x, y] == CellState.Empty)
             {
-                for (int x = 0; x < Width; x++)
-                {
-                    _cells[x, y] = _cells[x, y - 1];
-                }
-            }
-
-            for (int x = 0; x < Width; x++)
-            {
-                _cells[x, 0] = CellState.Empty;
+                return false;
             }
         }
-        return clearedRows.Count;
+        return true;
+    }
+
+    private void ClearRow(int y)
+    {
+        for (int x = 0; x < Width; x++)
+        {
+            _cells[x, y] = CellState.Empty;
+        }
+    }
+
+    private void CopyRowDown(int src, int dst)
+    {
+        for (int x = Width - 1; x >= 0; x--)
+        {
+            _cells[x, dst] = _cells[x, src];
+        }
     }
 
     public CellState this[int x, int y] => _cells[x, y];
@@ -144,8 +163,14 @@ public sealed class Board
         public static readonly DefaultRotationSystem Instance = new();
         private static readonly Coord[] Kicks = [new(0, 0), new(-1, 0), new(1, 0), new(0, -1)];
 
-        public IEnumerable<Coord> GetKickOffsets(TetrominoType type, Rotation from, Rotation to) => Kicks;
+        public IEnumerable<Coord> GetKickOffsets(TetrominoType type, Rotation from, Rotation to)
+        {
+            return Kicks;
+        }
 
-        public IReadOnlyList<Coord> GetOffsets(TetrominoType type, Rotation from, Rotation to) => Kicks;
+        public IReadOnlyList<Coord> GetOffsets(TetrominoType type, Rotation from, Rotation to)
+        {
+            return Kicks;
+        }
     }
 }
