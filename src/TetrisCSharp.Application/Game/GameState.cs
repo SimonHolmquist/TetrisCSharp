@@ -141,7 +141,7 @@ public sealed class GameState
             return;
         }
 
-        if (Board.TryRotate(_current, dir, out Piece? rotated))
+        if (Board.TryRotate(_current, dir, out Piece? rotated) && rotated is not null)
         {
             _current = rotated;
         }
