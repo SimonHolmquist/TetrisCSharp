@@ -1,3 +1,4 @@
+using TetrisCSharp.Application.Abstractions;
 using TetrisCSharp.Domain.Config;
 using TetrisCSharp.Domain.Geometry;
 
@@ -5,14 +6,18 @@ namespace TetrisCSharp.Domain.Model;
 
 public sealed class Board
 {
+    private readonly IRotationSystem _rotationSystem;
     private readonly CellState[,] _cells;
     public int Width { get; }
     public int Height { get; } // incluye 2 filas ocultas arriba
+    public GameConfig Config { get; }
 
-    public Board(GameConfig cfg)
+    public Board(GameConfig? cfg = null, IRotationSystem? rotationSystem = null)
     {
-        Width = cfg.BoardWidth;
-        Height = cfg.BoardHeight;
+        Config = cfg ?? new GameConfig();
+        Width = Config.BoardWidth;
+        Height = Config.BoardHeight;
+        _rotationSystem = rotationSystem ?? DefaultRotationSystem.Instance;
         _cells = new CellState[Width, Height];
         ClearAll();
     }
@@ -55,13 +60,28 @@ public sealed class Board
         return true;
     }
 
-    public bool TryRotate(ref Piece p, RotationDir dir, Func<Piece, IEnumerable<Coord>> kickOffsets)
+    public bool TryRotate(Piece piece, RotationDir dir, out Piece? rotated)
     {
-        Piece rotated = p.Rotate(dir);
-        foreach (Coord off in kickOffsets(rotated))
+        Piece target = piece.Rotate(dir);
+        foreach (Coord off in _rotationSystem.GetOffsets(piece.Type, piece.Rotation, target.Rotation))
         {
-            Piece candidate = rotated.WithOrigin(p.Origin.Translate(off.X, off.Y));
-            if (IsValidPosition(candidate)) { p = candidate; return true; }
+            Piece candidate = target.WithOrigin(piece.Origin.Translate(off.X, off.Y));
+            if (IsValidPosition(candidate))
+            {
+                rotated = candidate;
+                return true;
+            }
+        }
+        rotated = null;
+        return false;
+    }
+
+    public bool TryRotate(ref Piece piece, RotationDir dir)
+    {
+        if (TryRotate(piece, dir, out var rotated))
+        {
+            piece = rotated!;
+            return true;
         }
         return false;
     }
@@ -118,4 +138,14 @@ public sealed class Board
     }
 
     public CellState this[int x, int y] => _cells[x, y];
+
+    private sealed class DefaultRotationSystem : IRotationSystem
+    {
+        public static readonly DefaultRotationSystem Instance = new();
+        private static readonly Coord[] Kicks = [new(0, 0), new(-1, 0), new(1, 0), new(0, -1)];
+
+        public IEnumerable<Coord> GetKickOffsets(TetrominoType type, Rotation from, Rotation to) => Kicks;
+
+        public IReadOnlyList<Coord> GetOffsets(TetrominoType type, Rotation from, Rotation to) => Kicks;
+    }
 }
