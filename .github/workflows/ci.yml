@@ -1,0 +1,44 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore TetrisCSharp.sln
+
+      - name: Build (Release)
+        run: dotnet build TetrisCSharp.sln -c Release
+
+      - name: Test
+        run: dotnet test TetrisCSharp.sln -c Release --collect:"XPlat Code Coverage" --logger "trx"
+
+      - name: Format (verify)
+        run: dotnet format --verify-no-changes
+
+      - name: Publish Console (zip)
+        run: |
+          dotnet publish src/TetrisCSharp.ConsoleUI/TetrisCSharp.ConsoleUI.csproj -c Release -o artifacts/console
+          cd artifacts
+          tar -czf TetrisCSharp_Console.zip console
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TetrisCSharp_Console
+          path: artifacts/TetrisCSharp_Console.zip

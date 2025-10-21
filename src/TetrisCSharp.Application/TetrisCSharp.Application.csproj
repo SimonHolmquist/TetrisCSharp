@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>TetrisCSharp.Application</AssemblyName>
+    <RootNamespace>TetrisCSharp.Application</RootNamespace>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TetrisCSharp.Domain\TetrisCSharp.Domain.csproj" />
+  </ItemGroup>
+</Project>
