@@ -21,9 +21,9 @@ public sealed class JsonScoreStore : IScoreStore
 
     public bool TryAdd(ScoreEntry entry)
     {
-        var alias = entry.Alias.Trim().ToUpperInvariant();
+        string alias = entry.Alias.Trim().ToUpperInvariant();
         if (!AliasRx.IsMatch(alias)) return false; // validación :contentReference[oaicite:16]{index=16}
-        var e = entry with { Alias = alias };
+        ScoreEntry e = entry with { Alias = alias };
         _scores.Add(e);
         Save();
         return true;
@@ -34,7 +34,7 @@ public sealed class JsonScoreStore : IScoreStore
         try
         {
             if (!File.Exists(_path)) { _scores = new(); return; }
-            var json = File.ReadAllText(_path);
+            string json = File.ReadAllText(_path);
             _scores = JsonSerializer.Deserialize<List<ScoreEntry>>(json) ?? new();
         }
         catch { _scores = new(); } // tolerante a archivo corrupto :contentReference[oaicite:17]{index=17}
@@ -43,12 +43,12 @@ public sealed class JsonScoreStore : IScoreStore
     {
         try
         {
-            var directory = Path.GetDirectoryName(_path);
+            string? directory = Path.GetDirectoryName(_path);
             if (!string.IsNullOrEmpty(directory))
             {
                 Directory.CreateDirectory(directory);
             }
-            var json = JsonSerializer.Serialize(_scores);
+            string json = JsonSerializer.Serialize(_scores);
             File.WriteAllText(_path, json);
         }
         catch { /* ignore */ }

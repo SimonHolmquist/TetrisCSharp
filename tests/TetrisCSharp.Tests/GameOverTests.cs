@@ -1,10 +1,8 @@
 using FluentAssertions;
 using TetrisCSharp.Application.Game;
-using TetrisCSharp.Domain;
 using TetrisCSharp.Domain.Config;
 using TetrisCSharp.Domain.Geometry;
 using TetrisCSharp.Domain.Model;
-using Xunit;
 
 namespace TetrisCSharp.Tests
 {
@@ -23,7 +21,7 @@ namespace TetrisCSharp.Tests
             }
 
             GameState state = new(board);
-            var ok = state.TrySpawnNext(); // el método que uses para spawnear
+            bool ok = state.TrySpawnNext(); // el método que uses para spawnear
             ok.Should().BeFalse();
             state.IsOver.Should().BeTrue();
         }

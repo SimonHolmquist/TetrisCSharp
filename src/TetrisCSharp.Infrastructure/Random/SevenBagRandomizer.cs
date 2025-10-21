@@ -16,12 +16,12 @@ public sealed class SevenBagRandomizer : IRandomizer
 
     private void Refill()
     {
-        var arr = Enum.GetValues<TetrominoType>().ToArray();
+        TetrominoType[] arr = Enum.GetValues<TetrominoType>().ToArray();
         for (int i = arr.Length - 1; i > 0; i--)
         {
             int j = _rng.Next(i + 1);
             (arr[i], arr[j]) = (arr[j], arr[i]);
         }
-        foreach (var t in arr) _bag.Enqueue(t);
+        foreach (TetrominoType t in arr) _bag.Enqueue(t);
     }
 }

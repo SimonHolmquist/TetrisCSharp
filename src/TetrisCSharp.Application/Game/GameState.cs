@@ -1,4 +1,3 @@
-using System;
 using TetrisCSharp.Application.Abstractions;
 using TetrisCSharp.Domain.Config;
 using TetrisCSharp.Domain.Geometry;
@@ -142,7 +141,7 @@ public sealed class GameState
             return;
         }
 
-        if (Board.TryRotate(_current, dir, out Piece? rotated))
+        if (Board.TryRotate(_current, dir, out Piece? rotated) && rotated is not null)
         {
             _current = rotated;
         }
@@ -177,7 +176,7 @@ public sealed class GameState
         ref long last = ref (left ? ref _leftLastRepeat : ref _rightLastRepeat);
         int dir = left ? -1 : 1;
 
-        var now = clock.Millis;
+        long now = clock.Millis;
         if (!held)
         {
             Board.TryMove(ref _current, dir, 0);
@@ -211,7 +210,7 @@ public sealed class GameState
     private void FinalizePieceLock()
     {
         Board.Lock(_current);
-        var lines = Board.ClearLines(out _);
+        int lines = Board.ClearLines(out _);
         if (lines > 0)
         {
             _scoring.AddLineClear(lines, Level);
@@ -225,7 +224,7 @@ public sealed class GameState
 
     private void UpdateLevelFromLines()
     {
-        var newLevel = LinesCleared / Config.LinesPerLevel;
+        int newLevel = LinesCleared / Config.LinesPerLevel;
         if (newLevel != Level)
         {
             Level = newLevel;
@@ -241,7 +240,7 @@ public sealed class GameState
     private static GameConfig ResolveConfig(Board board, GameConfig? overrideConfig)
     {
         ArgumentNullException.ThrowIfNull(board);
-        var candidate = overrideConfig ?? board.Config;
+        GameConfig candidate = overrideConfig ?? board.Config;
         if (candidate.BoardWidth == board.Width && candidate.BoardHeight == board.Height)
         {
             return candidate;
@@ -266,7 +265,7 @@ public sealed class GameState
 
         public TetrominoType Next()
         {
-            var value = Sequence[_index % Sequence.Length];
+            TetrominoType value = Sequence[_index % Sequence.Length];
             _index++;
             return value;
         }
