@@ -24,7 +24,12 @@ dotnet run --project src/TetrisCSharp.ConsoleUI -c Release
 
 ---
 
-## Qué quedó pendiente para próxima fase
-- Reinstalar **Tests** (xUnit + FluentAssertions) y **CI** (Actions con build/test y artefacto) tal cual docs. También fake clocks/inputs y tests de colisiones, rotaciones, clears y progresión de nivel :contentReference[oaicite:24]{index=24} :contentReference[oaicite:25]{index=25}.
+## Cómo correr tests y formato
 
-¿Querés que te lo empaquete como **patch** `git` listo para aplicar o que redacte los **commits** sugeridos (board+rotations, loop, renderer diff, input DAS/ARR, scoring, ranking) con mensajes?
+- Ejecutar tests: `dotnet test -c Release`
+- Verificar formato: `dotnet format`
+- Cobertura local (opcional): `dotnet test -c Release --collect:"XPlat Code Coverage"`
+
+## Controles (resumen)
+
+←/7 = izquierda, →/9 = derecha, ↓/4 = soft drop, ↑/8 = rotar horario, Ctrl+↑/Shift+8 = anti horario, 5 = hard drop, H = ayuda, P/Esc = pausa, Enter = confirmar, Space = reiniciar (ver docs/07_InputMappings.md).  [SRS-lite + kicks (0,0),(-1,0),(1,0),(0,-1)].
