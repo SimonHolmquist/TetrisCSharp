@@ -43,7 +43,12 @@ public sealed class JsonScoreStore : IScoreStore
     {
         try
         {
-            string json = JsonSerializer.Serialize(_scores);
+            var directory = Path.GetDirectoryName(_path);
+            if (!string.IsNullOrEmpty(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+            var json = JsonSerializer.Serialize(_scores);
             File.WriteAllText(_path, json);
         }
         catch { /* ignore */ }
