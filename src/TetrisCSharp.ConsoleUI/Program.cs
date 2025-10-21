@@ -1,52 +1,38 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using TetrisCSharp.Application;
-using TetrisCSharp.Domain;
-using TetrisCSharp.Infrastructure;
+using TetrisCSharp.Application.Abstractions;
+using TetrisCSharp.Application.Game;
+using TetrisCSharp.ConsoleUI.Input;
+using TetrisCSharp.ConsoleUI.Rendering;
+using TetrisCSharp.Domain.Config;
+using TetrisCSharp.Infrastructure.Random;
+using TetrisCSharp.Infrastructure.Rotation;
+using TetrisCSharp.Infrastructure.Scoring;
+using TetrisCSharp.Infrastructure.Scores;
+using TetrisCSharp.Infrastructure.Time;
 
-namespace TetrisCSharp.ConsoleUI;
+var cfg = new GameConfig();
+IClock clock = new SystemClock();
+IRandomizer rng = new SevenBagRandomizer();
+IRotationSystem rot = new SrsLiteRotationSystem();
+IScoring scoring = new ScoringService();
+IScoreStore store = new JsonScoreStore(Path.Combine(AppContext.BaseDirectory, "scores.json"));
 
-public static class Program
+// Core state (portable)
+var state = new GameState(cfg, rng, rot, scoring);
+
+// UI dependiente de consola
+var renderer = new RendererASCII(cfg.BoardWidth + 2 /*marco*/, cfg.BoardHeight - 2 /*visibles*/);
+var input = new ConsoleInputProvider();
+
+// Orquestador
+var loop = new GameLoopService(state, clock, renderer, input, store);
+
+// Fixed render cadence ~60 FPS, lógica de gravedad dentro del estado
+var targetFrameMs = 16; // ~60Hz
+while (loop.Mode != UIMode.Exit)
 {
-    public static void Main(string[] args)
-    {
-        Console.Title = "TetrisCSharp (Fase 0)";
-        Console.ForegroundColor = ConsoleColor.Green;
-        Console.BackgroundColor = ConsoleColor.Black;
-        Console.Clear();
-
-        var configuration = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.json", optional: true)
-            .Build();
-
-        var services = new ServiceCollection();
-
-        // Config
-        var cfg = new GameConfig();
-        configuration.GetSection("GameConfig").Bind(cfg);
-        services.AddSingleton(cfg);
-
-        // Infra / Core
-        services.AddSingleton<IClock, SystemClock>();
-        services.AddSingleton<IRandomizer, SevenBagRandomizer>();
-        services.AddSingleton<IRotationSystem, SrsLiteRotationSystem>();
-        services.AddSingleton<IScoring, ScoringService>();
-        var scorePath = configuration.GetSection("ScoreStore")["Path"] ?? "scores/top10.json";
-        services.AddSingleton<IScoreStore>(_ => new JsonScoreStore(scorePath));
-
-        // UI
-        services.AddSingleton<IRenderer, RendererASCII>();
-        services.AddSingleton<IInputProvider, ConsoleInputProvider>();
-
-        var provider = services.BuildServiceProvider();
-
-        // Fase 0: Mensaje de smoke-run.
-        Console.WriteLine("╔═══════════════════════════════════════╗");
-        Console.WriteLine("║   TetrisCSharp — Scaffold (Fase 0)   ║");
-        Console.WriteLine("╚═══════════════════════════════════════╝");
-        Console.WriteLine();
-        Console.WriteLine("El core está registrado por DI y listo para Fase 1.");
-        Console.WriteLine("Presioná cualquier tecla para salir...");
-        Console.ReadKey(true);
-    }
+    var start = clock.Millis;
+    loop.RunFrame();
+    var elapsed = clock.Millis - start;
+    var sleep = targetFrameMs - (int)elapsed;
+    if (sleep > 0) Thread.Sleep(sleep);
 }
