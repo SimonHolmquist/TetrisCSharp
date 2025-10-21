@@ -20,7 +20,7 @@ public sealed class RendererASCII : IRenderer
         Console.Clear();
         Console.ForegroundColor = ConsoleColor.Green;
         _front = new char[_w, _h];
-        _back  = new char[_w, _h];
+        _back = new char[_w, _h];
     }
 
     public void Render(GameState s)

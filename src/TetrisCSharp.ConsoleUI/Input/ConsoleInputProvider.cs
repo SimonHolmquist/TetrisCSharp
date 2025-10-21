@@ -6,11 +6,11 @@ public sealed class ConsoleInputProvider : IInputProvider
 {
     public IEnumerable<InputEvent> Poll()
     {
-        var list = new List<InputEvent>();
+        List<InputEvent> list = new List<InputEvent>();
         while (Console.KeyAvailable)
         {
-            var key = Console.ReadKey(true);
-            var flags = Map(key);
+            ConsoleKeyInfo key = Console.ReadKey(true);
+            KeyFlags flags = Map(key);
             if (flags != KeyFlags.None)
                 list.Add(new InputEvent(flags, KeyEventType.Down, Environment.TickCount64));
         }
