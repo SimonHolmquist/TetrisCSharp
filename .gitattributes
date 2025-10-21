@@ -1,1 +1,30 @@
-* text eol=lf
+# Normalizar EOL a LF para todo el repo
+* text=auto eol=lf
+
+# Textos explícitos a LF
+*.sln           text eol=lf
+*.cs            text eol=lf
+*.csproj        text eol=lf
+*.props         text eol=lf
+*.targets       text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+*.md            text eol=lf
+*.json          text eol=lf
+*.editorconfig  text eol=lf
+*.ps1           text eol=lf
+*.sh            text eol=lf
+
+# Binarios
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.zip binary
+*.tar.gz binary
+*.dll binary
+*.exe binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
