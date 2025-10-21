@@ -1,4 +1,6 @@
 using System.Collections.Immutable;
+using TetrisCSharp.Domain.Geometry;
+using TetrisCSharp.Domain.Model;
 
 namespace TetrisCSharp.Domain;
 
