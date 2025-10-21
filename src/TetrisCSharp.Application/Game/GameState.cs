@@ -33,18 +33,39 @@ public sealed class GameState
 
     public GameState(GameConfig cfg, IRandomizer rng, IRotationSystem rot, IScoring scoring)
     {
-        Config = cfg; _rng = rng; _rot = rot; _scoring = scoring;
+        Config = cfg;
+        _rng = rng;
+        _rot = rot;
+        _scoring = scoring;
         Board = new Board(cfg);
-        Level = 0; LinesCleared = 0; Score = 0;
-        GravityMs = Math.Max(cfg.GravityMinMs, cfg.GravityBaseMs - Level * cfg.GravityPerLevelMs); // :contentReference[oaicite:6]{index=6}
-        Next = _rng.Next();
+        Reset();
     }
 
     public void Start(IClock clock)
     {
         SpawnNewCurrent();
         _lastGravityTickMs = clock.Millis;
-        if (!Board.IsValidPosition(_current)) IsOver = true; // spawn fail → game over :contentReference[oaicite:7]{index=7}
+        if (!Board.IsValidPosition(_current)) IsOver = true;
+    }
+
+    public void Reset()
+    {
+        Board.ClearAll();
+        _scoring.Reset();
+        LinesCleared = 0;
+        Level = 0;
+        Score = 0;
+        HelpVisible = false;
+        IsPaused = false;
+        IsOver = false;
+        _leftHeld = false;
+        _rightHeld = false;
+        _leftLastRepeat = 0;
+        _rightLastRepeat = 0;
+        _lastGravityTickMs = 0;
+        UpdateGravityDelay();
+        Next = _rng.Next();
+        _current = null!;
     }
 
     private Coord SpawnOrigin()
@@ -73,22 +94,7 @@ public sealed class GameState
 
         if (!Board.TryMove(ref _current, 0, 1))
         {
-            // Lock + clear + score + next
-            Board.Lock(_current);
-            var lines = Board.ClearLines(out var _);
-            if (lines > 0) _scoring.AddLineClear(lines, Level); // 40/100/300/1200 × (L+1) :contentReference[oaicite:8]{index=8}
-            Score += _scoring.CommitPending();
-            LinesCleared += lines;
-
-            var newLevel = LinesCleared / Config.LinesPerLevel;
-            if (newLevel != Level)
-            {
-                Level = newLevel;
-                GravityMs = Math.Max(Config.GravityMinMs, Config.GravityBaseMs - Level * Config.GravityPerLevelMs); // :contentReference[oaicite:9]{index=9}
-            }
-
-            SpawnNewCurrent();
-            if (!Board.IsValidPosition(_current)) IsOver = true;
+            FinalizePieceLock();
         }
         _lastGravityTickMs = now;
     }
@@ -106,30 +112,17 @@ public sealed class GameState
         if (IsPaused || IsOver) return;
         int cells = 0;
         while (Board.TryMove(ref _current, 0, 1)) { cells++; }
-        _scoring.AddHardDrop(cells); // +2/celda :contentReference[oaicite:10]{index=10}
-        // Forzamos lock inmediato en próxima UpdateGravity:
-        Board.Lock(_current);
-        var lines = Board.ClearLines(out _);
-        if (lines > 0) _scoring.AddLineClear(lines, Level);
-        Score += _scoring.CommitPending();
-        LinesCleared += lines;
-
-        var newLevel = LinesCleared / Config.LinesPerLevel;
-        if (newLevel != Level)
-        {
-            Level = newLevel;
-            GravityMs = Math.Max(Config.GravityMinMs, Config.GravityBaseMs - Level * Config.GravityPerLevelMs);
-        }
-
-        SpawnNewCurrent();
-        if (!Board.IsValidPosition(_current)) IsOver = true;
+        _scoring.AddHardDrop(cells);
+        FinalizePieceLock();
     }
 
     public void SoftDropStep()
     {
         if (IsPaused || IsOver) return;
         if (Board.TryMove(ref _current, 0, 1))
-            _scoring.AddSoftDrop(1); // +1/celda :contentReference[oaicite:11]{index=11}
+        {
+            _scoring.AddSoftDrop(1);
+        }
     }
 
     public void MoveLeftRight(bool left, IClock clock)
@@ -142,21 +135,25 @@ public sealed class GameState
         var now = clock.Millis;
         if (!held)
         {
-            // primer empuje
-            if (Board.TryMove(ref _current, dir, 0))
-                last = now + DAS; // arranca retraso
-            else last = now + DAS;
+            Board.TryMove(ref _current, dir, 0);
             held = true;
+            last = now + DAS;
             return;
         }
 
         if (now >= last)
         {
-            if (Board.TryMove(ref _current, dir, 0)) { /* ok */ }
-            last += ARR;
+            Board.TryMove(ref _current, dir, 0);
+            last = now + ARR;
         }
     }
-    public void ReleaseLeftRight(bool left) { if (left) { _leftHeld = false; } else
+    public void ReleaseLeftRight(bool left)
+    {
+        if (left)
+        {
+            _leftHeld = false;
+        }
+        else
         {
             _rightHeld = false;
         }
@@ -164,5 +161,39 @@ public sealed class GameState
     public void Tick(IClock clock)
     {
         UpdateGravity(clock);
+    }
+
+    private void FinalizePieceLock()
+    {
+        Board.Lock(_current);
+        var lines = Board.ClearLines(out _);
+        if (lines > 0)
+        {
+            _scoring.AddLineClear(lines, Level);
+        }
+        _scoring.CommitPending();
+        Score = _scoring.Total;
+        LinesCleared += lines;
+        UpdateLevelFromLines();
+        SpawnNewCurrent();
+        if (!Board.IsValidPosition(_current))
+        {
+            IsOver = true;
+        }
+    }
+
+    private void UpdateLevelFromLines()
+    {
+        var newLevel = LinesCleared / Config.LinesPerLevel;
+        if (newLevel != Level)
+        {
+            Level = newLevel;
+            UpdateGravityDelay();
+        }
+    }
+
+    private void UpdateGravityDelay()
+    {
+        GravityMs = Math.Max(Config.GravityMinMs, Config.GravityBaseMs - Level * Config.GravityPerLevelMs);
     }
 }
